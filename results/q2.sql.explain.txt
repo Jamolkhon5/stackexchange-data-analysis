@@ -1,0 +1,26 @@
+Limit  (cost=46.15..46.15 rows=1 width=100) (actual time=0.026..0.027 rows=0 loops=1)
+  ->  Sort  (cost=46.15..46.15 rows=1 width=100) (actual time=0.026..0.027 rows=0 loops=1)
+        Sort Key: a.score, q.creation_date DESC
+        Sort Method: quicksort  Memory: 25kB
+        ->  Nested Loop  (cost=6.95..46.14 rows=1 width=100) (actual time=0.004..0.005 rows=0 loops=1)
+              ->  Nested Loop  (cost=0.30..35.46 rows=1 width=100) (actual time=0.004..0.004 rows=0 loops=1)
+                    ->  Nested Loop  (cost=0.16..27.26 rows=1 width=64) (actual time=0.003..0.004 rows=0 loops=1)
+                          ->  Seq Scan on posts q  (cost=0.00..14.88 rows=2 width=48) (actual time=0.003..0.003 rows=0 loops=1)
+                                Filter: ((accepted_answer_id IS NOT NULL) AND (post_type_id = 1))
+                          ->  Memoize  (cost=0.16..6.18 rows=1 width=20) (never executed)
+                                Cache Key: q.accepted_answer_id
+                                Cache Mode: logical
+                                ->  Index Scan using posts_pkey on posts a  (cost=0.15..6.17 rows=1 width=20) (never executed)
+                                      Index Cond: (id = q.accepted_answer_id)
+                                      Filter: ((score < 0) AND (post_type_id = 2))
+                    ->  Index Scan using users_pkey on users u  (cost=0.15..8.17 rows=1 width=40) (never executed)
+                          Index Cond: (id = a.owner_user_id)
+              ->  Bitmap Heap Scan on post_tags pt  (cost=6.65..10.66 rows=1 width=4) (never executed)
+                    Recheck Cond: ((q.id = post_id) AND (tag = 'postgresql'::text))
+                    ->  BitmapAnd  (cost=6.65..6.65 rows=1 width=0) (never executed)
+                          ->  Bitmap Index Scan on idx_post_tags_post_id  (cost=0.00..2.20 rows=6 width=0) (never executed)
+                                Index Cond: (post_id = q.id)
+                          ->  Bitmap Index Scan on idx_post_tags_tag  (cost=0.00..4.20 rows=6 width=0) (never executed)
+                                Index Cond: (tag = 'postgresql'::text)
+Planning Time: 0.226 ms
+Execution Time: 0.102 ms
